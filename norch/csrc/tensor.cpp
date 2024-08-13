@@ -2,9 +2,9 @@
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
-#include <cuda_runtime_api.h>
+// #include <cuda_runtime_api.h>
 #include "tensor.h"
-#include "cuda.h"
+// #include "cuda.h"
 #include "cpu.h"
 
 extern "C" {
@@ -65,9 +65,7 @@ extern "C" {
         if (tensor->data != NULL) {
             if (strcmp(tensor->device, "cpu") == 0) {
                 free(tensor->data);
-            } else {
-                free_cuda(tensor->data);
-            }
+            } 
             tensor->data = NULL;
         }
     }
@@ -95,9 +93,7 @@ extern "C" {
         float result;
         if (strcmp(tensor->device, "cpu") == 0) {
             result = tensor->data[index];
-        } else {
-            cudaMemcpy(&result, tensor->data + index, sizeof(float), cudaMemcpyDeviceToHost);            
-        }
+        } 
 
         return result;
     }
@@ -119,13 +115,7 @@ extern "C" {
             strcpy(target_device_type, "cpu");
         }
 
-        if ((strcmp(target_device_type, "cuda") == 0) && (strcmp(tensor->device, "cpu") == 0)) {
-            cpu_to_cuda(tensor, device_id);
-        }
-
-        else if ((strcmp(target_device_type, "cpu") == 0) && (strcmp(tensor->device, "cuda") == 0)) {
-            cuda_to_cpu(tensor);
-        }
+        
 
         free(target_device_type);
     }
@@ -165,12 +155,7 @@ extern "C" {
             add_tensor_cpu(tensor1, tensor2, result_data);
             return create_tensor(result_data, shape, ndim, tensor1->device);
         } 
-        else {
-            float* result_data;
-            cudaMalloc((void **)&result_data, tensor1->size * sizeof(float));
-            add_tensor_cuda(tensor1, tensor2, result_data);
-            return create_tensor(result_data, shape, ndim, tensor1->device);
-        }     
+            
     }
 
     Tensor* add_broadcasted_tensor(Tensor* tensor1, Tensor* tensor2) {
@@ -213,12 +198,7 @@ extern "C" {
             add_broadcasted_tensor_cpu(tensor1, tensor2, result_data, broadcasted_shape, broadcasted_size);
             return create_tensor(result_data, broadcasted_shape, max_ndim, tensor1->device);
         } 
-        else {
-            float* result_data;
-            cudaMalloc((void **)&result_data, broadcasted_size * sizeof(float));
-            add_broadcasted_tensor_cuda(tensor1, tensor2, result_data, broadcasted_shape, broadcasted_size);
-            return create_tensor(result_data, broadcasted_shape, max_ndim, tensor1->device);
-        }
+        
     }
 
     Tensor* sum_tensor(Tensor* tensor, int axis, bool keepdim) {
@@ -276,35 +256,7 @@ extern "C" {
                 
             }
             return create_tensor(result_data, shape, ndim, tensor->device);
-        } 
-        else {
-            float* result_data;
-            if (axis == -1) {
-                cudaMalloc((void**)&result_data, tensor->size * sizeof(float));
-            } else {
-                cudaMalloc((void**)&result_data, axis_size * sizeof(float));
-            }
-            sum_tensor_cuda(tensor, result_data, axis);
-            
-            if (keepdim) {
-                if (axis == -1){
-                    ndim = tensor->ndim;
-                    shape = (int*) malloc((tensor->ndim) * sizeof(int));
-                    for (int i = 0; i < tensor->ndim; i++) {
-                        shape[i] = 1;
-                    }
-                } else {
-                    shape = (int*) malloc((tensor->ndim) * sizeof(int));
-                    for (int i = 0; i < tensor->ndim; i++) {
-                        shape[i] = tensor->shape[i];
-                    }
-                    shape[axis] = 1;
-                    ndim = tensor->ndim;
-                }
-                
-            }
-            return create_tensor(result_data, shape, ndim, tensor->device);
-        }     
+        }   
     }
 
     Tensor* max_tensor(Tensor* tensor, int axis, bool keepdim) {
@@ -357,34 +309,6 @@ extern "C" {
             return create_tensor(result_data, shape, ndim, tensor->device);
 
         } 
-        else {
-            float* result_data;
-            if (axis == -1) {
-                cudaMalloc((void**)&result_data, tensor->size * sizeof(float));
-            } else {
-                cudaMalloc((void**)&result_data, axis_size * sizeof(float));
-            }
-            max_tensor_cuda(tensor, result_data, axis);
-
-            if (keepdim) {
-                if (axis == -1){
-                    ndim = tensor->ndim;
-                    shape = (int*) malloc((tensor->ndim) * sizeof(int));
-                    for (int i = 0; i < tensor->ndim; i++) {
-                        shape[i] = 1;
-                    }
-                } else {
-                    shape = (int*) malloc((tensor->ndim) * sizeof(int));
-                    for (int i = 0; i < tensor->ndim; i++) {
-                        shape[i] = tensor->shape[i];
-                    }
-                    shape[axis] = 1;
-                    ndim = tensor->ndim;
-                }
-                
-            }
-            return create_tensor(result_data, shape, ndim, tensor->device);
-        }     
     }
 
     Tensor* min_tensor(Tensor* tensor, int axis, bool keepdim) {
@@ -436,35 +360,7 @@ extern "C" {
             }
             return create_tensor(result_data, shape, ndim, tensor->device);
 
-        } 
-        else {
-            float* result_data;
-            if (axis == -1) {
-                cudaMalloc((void**)&result_data, tensor->size * sizeof(float));
-            } else {
-                cudaMalloc((void**)&result_data, axis_size * sizeof(float));
-            }
-            min_tensor_cuda(tensor, result_data, axis);
-
-            if (keepdim) {
-                if (axis == -1){
-                    ndim = tensor->ndim;
-                    shape = (int*) malloc((tensor->ndim) * sizeof(int));
-                    for (int i = 0; i < tensor->ndim; i++) {
-                        shape[i] = 1;
-                    }
-                } else {
-                    shape = (int*) malloc((tensor->ndim) * sizeof(int));
-                    for (int i = 0; i < tensor->ndim; i++) {
-                        shape[i] = tensor->shape[i];
-                    }
-                    shape[axis] = 1;
-                    ndim = tensor->ndim;
-                }
-                
-            }
-            return create_tensor(result_data, shape, ndim, tensor->device);
-        }       
+        }   
     }
 
     Tensor* sub_tensor(Tensor* tensor1, Tensor* tensor2) {
@@ -500,12 +396,6 @@ extern "C" {
                 exit(1);
             }
             sub_tensor_cpu(tensor1, tensor2, result_data);
-            return create_tensor(result_data, shape, ndim, tensor1->device);
-        } 
-        else {
-            float* result_data;
-            cudaMalloc((void **)&result_data, tensor1->size * sizeof(float));
-            sub_tensor_cuda(tensor1, tensor2, result_data);
             return create_tensor(result_data, shape, ndim, tensor1->device);
         }
     }
@@ -549,13 +439,6 @@ extern "C" {
 
             sub_broadcasted_tensor_cpu(tensor1, tensor2, result_data, broadcasted_shape, broadcasted_size);
             return create_tensor(result_data, broadcasted_shape, max_ndim, tensor1->device);
-        } 
-        else {
-
-            float* result_data;
-            cudaMalloc((void **)&result_data, broadcasted_size * sizeof(float));
-            sub_broadcasted_tensor_cuda(tensor1, tensor2, result_data, broadcasted_shape, broadcasted_size);
-            return create_tensor(result_data, broadcasted_shape, max_ndim, tensor1->device);
         }
     }
 
@@ -594,12 +477,7 @@ extern "C" {
             elementwise_mul_tensor_cpu(tensor1, tensor2, result_data);
             return create_tensor(result_data, shape, ndim, tensor1->device);
         } 
-        else {
-            float* result_data;
-            cudaMalloc((void **)&result_data, tensor1->size * sizeof(float));
-            elementwise_mul_tensor_cuda(tensor1, tensor2, result_data);
-            return create_tensor(result_data, shape, ndim, tensor1->device);
-        }
+        
     }
 
     Tensor* scalar_mul_tensor(Tensor* tensor, float scalar) {
@@ -624,12 +502,7 @@ extern "C" {
             scalar_mul_tensor_cpu(tensor, scalar, result_data);
             return create_tensor(result_data, shape, ndim, tensor->device);
         } 
-        else {
-            float* result_data;
-            cudaMalloc((void **)&result_data, tensor->size * sizeof(float));
-            scalar_mul_tensor_cuda(tensor, scalar, result_data);
-            return create_tensor(result_data, shape, ndim, tensor->device);
-        }
+        
     }
 
     Tensor* scalar_div_tensor(float scalar, Tensor* tensor) {
@@ -654,12 +527,7 @@ extern "C" {
             scalar_div_tensor_cpu(scalar, tensor, result_data);
             return create_tensor(result_data, shape, ndim, tensor->device);
         } 
-        else {
-            float* result_data;
-            cudaMalloc((void **)&result_data, tensor->size * sizeof(float));
-            scalar_div_tensor_cuda(scalar, tensor, result_data);
-            return create_tensor(result_data, shape, ndim, tensor->device);
-        }
+        
     }
 
     Tensor* tensor_div_scalar(Tensor* tensor, float scalar) {
@@ -684,12 +552,7 @@ extern "C" {
             tensor_div_scalar_cpu(tensor, scalar, result_data);
             return create_tensor(result_data, shape, ndim, tensor->device);
         } 
-        else {
-            float* result_data;
-            cudaMalloc((void **)&result_data, tensor->size * sizeof(float));
-            tensor_div_scalar_cuda(tensor, scalar, result_data);
-            return create_tensor(result_data, shape, ndim, tensor->device); 
-        }
+        
     }
 
     Tensor* tensor_div_tensor(Tensor* tensor1, Tensor* tensor2) {
@@ -727,12 +590,7 @@ extern "C" {
             tensor_div_tensor_cpu(tensor1, tensor2, result_data);
             return create_tensor(result_data, shape, ndim, tensor1->device);
         } 
-        else {
-            float* result_data;
-            cudaMalloc((void **)&result_data, tensor1->size * sizeof(float));
-            tensor_div_tensor_cuda(tensor1, tensor2, result_data);
-            return create_tensor(result_data, shape, ndim, tensor1->device);
-        }
+        
     }
 
     Tensor* matmul_tensor(Tensor* tensor1, Tensor* tensor2) {
@@ -781,12 +639,7 @@ extern "C" {
             matmul_tensor_cpu(tensor1, tensor2, result_data);
             return create_tensor(result_data, shape, ndim, tensor1->device);
         } 
-        else {
-            float* result_data;
-            cudaMalloc((void **)&result_data, size * sizeof(float));
-            matmul_tensor_cuda(tensor1, tensor2, result_data);
-            return create_tensor(result_data, shape, ndim, tensor1->device);
-        }
+        
     }
 
     Tensor* broadcasted_batched_matmul_tensor(Tensor* tensor1, Tensor* tensor2) {
@@ -833,12 +686,7 @@ extern "C" {
             broadcasted_batched_matmul_tensor_cpu(tensor1, tensor2, result_data);
             return create_tensor(result_data, shape, ndim, tensor1->device);
         } 
-        else {
-            float* result_data;
-            cudaMalloc((void **)&result_data, size * sizeof(float));
-            broadcasted_batched_matmul_tensor_cuda(tensor1, tensor2, result_data);
-            return create_tensor(result_data, shape, ndim, tensor1->device);
-        }
+        
 
     }
 
@@ -892,12 +740,7 @@ extern "C" {
             batched_matmul_tensor_cpu(tensor1, tensor2, result_data);
             return create_tensor(result_data, shape, ndim, tensor1->device);
         } 
-        else {
-            float* result_data;
-            cudaMalloc((void **)&result_data, size * sizeof(float));
-            batched_matmul_tensor_cuda(tensor1, tensor2, result_data);
-            return create_tensor(result_data, shape, ndim, tensor1->device);
-        }
+        
 
     }
 
@@ -923,12 +766,7 @@ extern "C" {
             tensor_pow_scalar_cpu(tensor, exponent, result_data);
             return create_tensor(result_data, shape, ndim, tensor->device);
         } 
-        else {
-            float* result_data;
-            cudaMalloc((void **)&result_data, tensor->size * sizeof(float));
-            tensor_pow_scalar_cuda(tensor, exponent, result_data);
-            return create_tensor(result_data, shape, ndim, tensor->device);
-        }
+        
     }
 
     Tensor* scalar_pow_tensor(float base, Tensor* tensor) {
@@ -952,12 +790,7 @@ extern "C" {
             scalar_pow_tensor_cpu(base, tensor, result_data);
             return create_tensor(result_data, shape, ndim, tensor->device);
         } 
-        else {
-            float* result_data;
-            cudaMalloc((void **)&result_data, tensor->size * sizeof(float));
-            scalar_pow_tensor_cuda(base, tensor, result_data);
-            return create_tensor(result_data, shape, ndim, tensor->device);       
-        }
+        
     }
 
     Tensor* log_tensor(Tensor* tensor) {
@@ -981,12 +814,7 @@ extern "C" {
             log_tensor_cpu(tensor, result_data);
             return create_tensor(result_data, shape, ndim, tensor->device);
         } 
-        else {
-            float* result_data;
-            cudaMalloc((void **)&result_data, tensor->size * sizeof(float));
-            log_tensor_cuda(tensor, result_data);
-            return create_tensor(result_data, shape, ndim, tensor->device);
-        }
+        
     }
 
     Tensor* reshape_tensor(Tensor* tensor, int* new_shape, int new_ndim) {
@@ -1023,12 +851,7 @@ extern "C" {
             assign_tensor_cpu(tensor, result_data);
             return create_tensor(result_data, shape, ndim, tensor->device);
         } 
-        else {
-            float* result_data;
-            cudaMalloc((void **)&result_data, tensor->size * sizeof(float));
-            assign_tensor_cuda(tensor, result_data);
-            return create_tensor(result_data, shape, ndim, tensor->device);
-        }
+        
     }
 
     Tensor* equal_tensor(Tensor* tensor1, Tensor* tensor2) {
@@ -1066,12 +889,7 @@ extern "C" {
             equal_tensor_cpu(tensor1, tensor2, result_data);
             return create_tensor(result_data, shape, ndim, tensor1->device);
         } 
-        else {
-            float* result_data;
-            cudaMalloc((void **)&result_data, tensor1->size * sizeof(float));
-            equal_tensor_cuda(tensor1, tensor2, result_data);
-            return create_tensor(result_data, shape, ndim, tensor1->device);         
-        }     
+        
     }
 
     Tensor* equal_broadcasted_tensor(Tensor* tensor1, Tensor* tensor2) {
@@ -1114,12 +932,7 @@ extern "C" {
             equal_broadcasted_tensor_cpu(tensor1, tensor2, result_data, broadcasted_shape, broadcasted_size);
             return create_tensor(result_data, broadcasted_shape, max_ndim, tensor1->device);
         } 
-        else {
-            float* result_data;
-            cudaMalloc((void **)&result_data, broadcasted_size * sizeof(float));
-            equal_broadcasted_tensor_cuda(tensor1, tensor2, result_data, broadcasted_shape, broadcasted_size);
-            return create_tensor(result_data, broadcasted_shape, max_ndim, tensor1->device);
-        }
+        
     }
 
 
@@ -1144,12 +957,7 @@ extern "C" {
             ones_like_tensor_cpu(tensor, result_data);
             return create_tensor(result_data, shape, ndim, tensor->device);
         } 
-        else {
-            float* result_data;
-            cudaMalloc((void **)&result_data, tensor->size * sizeof(float));
-            ones_like_tensor_cuda(tensor, result_data);
-            return create_tensor(result_data, shape, ndim, tensor->device);
-        }
+        
     }
 
     Tensor* zeros_like_tensor(Tensor* tensor) {
@@ -1173,12 +981,7 @@ extern "C" {
             zeros_like_tensor_cpu(tensor, result_data);
             return create_tensor(result_data, shape, ndim, tensor->device);
         } 
-        else {
-            float* result_data;
-            cudaMalloc((void **)&result_data, tensor->size * sizeof(float));
-            zeros_like_tensor_cuda(tensor, result_data);
-            return create_tensor(result_data, shape, ndim, tensor->device);
-        }
+        
     }
 
     Tensor* sin_tensor(Tensor* tensor) {
@@ -1202,12 +1005,7 @@ extern "C" {
             sin_tensor_cpu(tensor, result_data);
             return create_tensor(result_data, shape, ndim, tensor->device);
         } 
-        else {
-            float* result_data;
-            cudaMalloc((void **)&result_data, tensor->size * sizeof(float));
-            sin_tensor_cuda(tensor, result_data);
-            return create_tensor(result_data, shape, ndim, tensor->device);
-        }
+        
     }
 
     Tensor* cos_tensor(Tensor* tensor) {
@@ -1232,12 +1030,7 @@ extern "C" {
             cos_tensor_cpu(tensor, result_data);
             return create_tensor(result_data, shape, ndim, tensor->device);
         } 
-        else {
-            float* result_data;
-            cudaMalloc((void **)&result_data, tensor->size * sizeof(float));
-            cos_tensor_cuda(tensor, result_data);
-            return create_tensor(result_data, shape, ndim, tensor->device);
-        }
+        
     }
 
     Tensor* sigmoid_tensor(Tensor* tensor) {
@@ -1261,12 +1054,7 @@ extern "C" {
             sigmoid_tensor_cpu(tensor, result_data);
             return create_tensor(result_data, shape, ndim, tensor->device);
         } 
-        else {
-            float* result_data;
-            cudaMalloc((void **)&result_data, tensor->size * sizeof(float));
-            sigmoid_tensor_cuda(tensor, result_data);
-            return create_tensor(result_data, shape, ndim, tensor->device); 
-        }
+        
     }
 
     Tensor* transpose_tensor(Tensor* tensor) {
@@ -1305,25 +1093,7 @@ extern "C" {
             }
             return create_tensor(result_data, shape, ndim, tensor->device);
         } 
-        else {
-            float* result_data;
-            cudaMalloc((void **)&result_data, size * sizeof(float));
-            switch (ndim) {
-                case 1:
-                    transpose_1D_tensor_cuda(tensor, result_data);
-                    break;
-                case 2:
-                    transpose_2D_tensor_cuda(tensor, result_data);
-                    break;
-                case 3:
-                    transpose_3D_tensor_cuda(tensor, result_data);
-                    break;
-                default:
-                    fprintf(stderr, "Transpose only supports tensors up to 3 dimensions.\n");
-                    exit(-1);
-            }
-            return create_tensor(result_data, shape, ndim, tensor->device);
-        }
+        
     }
 
     Tensor* transpose_axes_tensor(Tensor* tensor, int axis1, int axis2) {
@@ -1360,20 +1130,7 @@ extern "C" {
             make_contiguous(new_tensor);
             return new_tensor;
         } 
-        else {
-            float* result_data;
-            cudaMalloc((void **)&result_data, size * sizeof(float));
-            assign_tensor_cuda(tensor, result_data);
-
-            Tensor* new_tensor = create_tensor(result_data, shape, ndim, tensor->device);
-            for (int i = 0; i < ndim; i++) {
-                new_tensor->strides[i] = tensor->strides[i];
-            }
-            new_tensor->strides[axis1] = tensor->strides[axis2];
-            new_tensor->strides[axis2] = tensor->strides[axis1];
-            make_contiguous(new_tensor);
-            return new_tensor;
-        }
+        
     }
 
     void make_contiguous(Tensor* tensor) {
@@ -1396,10 +1153,6 @@ extern "C" {
                 fprintf(stderr, "Memory allocation failed\n");
             }
             make_contiguous_tensor_cpu(tensor, result_data, new_strides);
-        } else {
-            float* result_data;
-            cudaMalloc((void **)&result_data, tensor->size * sizeof(float));
-            make_contiguous_tensor_cuda(tensor, result_data, new_strides);
-        }
+        } 
     }
 }

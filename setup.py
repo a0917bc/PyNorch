@@ -6,9 +6,9 @@ import sys
 with open("README.md", "r", encoding="utf-8") as fh:
     long_description = fh.read()
 
-apt_dependencies = [
-    'nvidia-cuda-toolkit'
-]
+# apt_dependencies = [
+#     'nvidia-cuda-toolkit'
+# ]
 
 apt_get_dependencies = [
     'mpi',
@@ -17,10 +17,10 @@ apt_get_dependencies = [
     'openmpi-bin'
 ]
 
-apt_nccl = [
-    'libnccl2=2.21.5-1+cuda12.2',
-    'libnccl-dev=2.21.5-1+cuda12.2'
-]
+# apt_nccl = [
+#     'libnccl2=2.21.5-1+cuda12.2',
+#     'libnccl-dev=2.21.5-1+cuda12.2'
+# ]
 
 def run_command(command):
     process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
@@ -40,32 +40,32 @@ run_command(['sudo', 'apt-get', 'update'])
 
 print("Installing apt dependencies...")
 sys.stdout.flush()
-for package in apt_dependencies:
-    run_command(['sudo', 'apt', 'install', '-y', package])
+# for package in apt_dependencies:
+#     run_command(['sudo', 'apt', 'install', '-y', package])
 
 print("Installing apt-get dependencies...")
 sys.stdout.flush()
 for package in apt_get_dependencies:
     run_command(['sudo', 'apt-get', 'install', '-y', package])
 
-print("Downloading and installing CUDA keyring...")
-sys.stdout.flush()
-run_command(['wget', 'https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2004/x86_64/cuda-keyring_1.0-1_all.deb'])
-run_command(['sudo', 'dpkg', '-i', 'cuda-keyring_1.0-1_all.deb'])
+# print("Downloading and installing CUDA keyring...")
+# sys.stdout.flush()
+# run_command(['wget', 'https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2004/x86_64/cuda-keyring_1.0-1_all.deb'])
+# run_command(['sudo', 'dpkg', '-i', 'cuda-keyring_1.0-1_all.deb'])
 
 print("Upgrading packages...")
 sys.stdout.flush()
 run_command(['sudo', 'apt-get', 'upgrade', '-y', '--allow-change-held-packages'])
 run_command(['sudo', 'apt-mark', 'unhold', 'libnccl-dev', 'libnccl2'])
 
-print("Installing NCCL packages...")
-sys.stdout.flush()
-for package in apt_nccl:
-    run_command(['sudo', 'apt', 'install', '-y', package])
+# print("Installing NCCL packages...")
+# sys.stdout.flush()
+# for package in apt_nccl:
+#     run_command(['sudo', 'apt', 'install', '-y', package])
 
-print("Cleaning up...")
-sys.stdout.flush()
-run_command(['rm', 'cuda-keyring_1.0-1_all.deb'])
+# print("Cleaning up...")
+# sys.stdout.flush()
+# run_command(['rm', 'cuda-keyring_1.0-1_all.deb'])
 
 class CustomInstall(install):
     def run(self):
