@@ -1053,6 +1053,52 @@ class Tensor:
 
         return result_data
     
+    def conv2d(self, weight, bias=None, stride=1, padding=0):
+        # Ensure input and weight are 4D tensors
+        if self.ndim != 4 or weight.ndim != 4:
+            raise ValueError("Both input and weight must be 4D tensors")
+
+        # Prepare arguments for the C function
+        Tensor._C.conv2d_tensor.argtypes = [
+            ctypes.POINTER(CTensor),
+            ctypes.POINTER(CTensor),
+            ctypes.POINTER(CTensor),
+            ctypes.c_int,
+            ctypes.c_int
+        ]
+        Tensor._C.conv2d_tensor.restype = ctypes.POINTER(CTensor)
+
+        # Call the C function
+        result_tensor_ptr = Tensor._C.conv2d_tensor(
+            self.tensor,
+            weight.tensor,
+            bias.tensor if bias is not None else None,
+            ctypes.c_int(stride),
+            ctypes.c_int(padding)
+        )
+
+        # Create the result tensor
+        result_data = Tensor()
+        result_data.tensor = result_tensor_ptr
+
+        # Calculate the output shape
+        batch_size, in_channels, in_height, in_width = self.shape
+        out_channels, _, kernel_height, kernel_width = weight.shape
+
+        out_height = (in_height + 2 * padding - kernel_height) // stride + 1
+        out_width = (in_width + 2 * padding - kernel_width) // stride + 1
+
+        result_data.shape = [batch_size, out_channels, out_height, out_width]
+        result_data.ndim = 4
+        result_data.device = self.device
+        result_data.numel = batch_size * out_channels * out_height * out_width
+
+        result_data.requires_grad = self.requires_grad or weight.requires_grad or (bias is not None and bias.requires_grad)
+        # if result_data.requires_grad:
+        #     result_data.grad_fn = Conv2dBackward(self, weight, bias, stride, padding)
+
+        return result_data
+
     @property
     def T(self):
         Tensor._C.transpose_tensor.argtypes = [ctypes.POINTER(CTensor)]
