@@ -34,5 +34,6 @@ void make_contiguous_tensor_cpu(Tensor* tensor, float* result_data, int* new_str
 void sin_tensor_cpu(Tensor* tensor, float* result_data);
 void cos_tensor_cpu(Tensor* tensor, float* result_data);
 void sigmoid_tensor_cpu(Tensor* tensor, float* result_data);
+void conv2d_tensor_cpu(Tensor* input, Tensor* weight, Tensor* bias, float* result_data, int stride, int padding);
 
 #endif /* CPU_H */

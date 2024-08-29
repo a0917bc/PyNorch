@@ -132,55 +132,6 @@ void tensor_div_tensor_cpu(Tensor* tensor1, Tensor* tensor2, float* result_data)
     }
 }
 
-void matmul_tensor_cpu(Tensor* tensor1, Tensor* tensor2, float* result_data) {
-    
-    for (int i = 0; i < tensor1->shape[0]; i++) {
-        for (int j = 0; j < tensor2->shape[1]; j++) {
-            float sum = 0.0;
-            for (int k = 0; k < tensor1->shape[1]; k++) {
-                sum += tensor1->data[i * tensor1->shape[1] + k] * tensor2->data[k * tensor2->shape[1] + j];
-            }
-            result_data[i * tensor2->shape[1] + j] = sum;
-        }
-    }
-}
-
-
-void broadcasted_batched_matmul_tensor_cpu(Tensor* tensor1, Tensor* tensor2, float* result_data) {
-
-    int result_data_stride = tensor1->shape[0] * tensor2->shape[2];
-
-    for (int batch = 0; batch < tensor2->shape[0]; batch++) {
-    
-        for (int i = 0; i < tensor1->shape[0]; i++) {
-            for (int j = 0; j < tensor2->shape[2]; j++) {
-                float sum = 0.0;
-                for (int k = 0; k < tensor1->shape[1]; k++) {
-                    sum += tensor1->data[i * tensor1->shape[1] + k] * tensor2->data[batch*tensor2->strides[0] + (k * tensor2->shape[2] + j)];
-                }
-                result_data[(batch * result_data_stride) + (i * tensor2->shape[2] + j)] = sum;
-            }
-        }
-    }
-} 
-
-void batched_matmul_tensor_cpu(Tensor* tensor1, Tensor* tensor2, float* result_data) {
-    int result_data_stride = tensor1->shape[1] * tensor2->shape[2];
-
-    for (int batch = 0; batch < tensor2->shape[0]; batch++) {
-    
-        for (int i = 0; i < tensor1->shape[1]; i++) {
-            for (int j = 0; j < tensor2->shape[2]; j++) {
-                float sum = 0.0;
-                for (int k = 0; k < tensor1->shape[2]; k++) {
-                    sum += tensor1->data[(batch * tensor1->strides[0]) + i * tensor1->shape[2] + k] * tensor2->data[batch*tensor2->strides[0] + (k * tensor2->shape[2] + j)];
-                }
-                result_data[(batch * result_data_stride) + (i * tensor2->shape[2] + j)] = sum;
-            }
-        }
-    }
-} 
-
 void scalar_pow_tensor_cpu(float base, Tensor* tensor, float* result_data) {
     
     for (int i = 0; i < tensor->size; i++) {
@@ -440,4 +391,95 @@ void cos_tensor_cpu(Tensor* tensor, float* result_data) {
     for (int i = 0; i < tensor->size; i++) {
         result_data[i] = cosf(tensor->data[i]);
     }
+}
+
+void matmul_tensor_cpu(Tensor* tensor1, Tensor* tensor2, float* result_data) {
+    
+    for (int i = 0; i < tensor1->shape[0]; i++) {
+        for (int j = 0; j < tensor2->shape[1]; j++) {
+            float sum = 0.0;
+            for (int k = 0; k < tensor1->shape[1]; k++) {
+                sum += tensor1->data[i * tensor1->shape[1] + k] * tensor2->data[k * tensor2->shape[1] + j];
+            }
+            result_data[i * tensor2->shape[1] + j] = sum;
+        }
+    }
+}
+
+
+void broadcasted_batched_matmul_tensor_cpu(Tensor* tensor1, Tensor* tensor2, float* result_data) {
+
+    int result_data_stride = tensor1->shape[0] * tensor2->shape[2];
+
+    for (int batch = 0; batch < tensor2->shape[0]; batch++) {
+    
+        for (int i = 0; i < tensor1->shape[0]; i++) {
+            for (int j = 0; j < tensor2->shape[2]; j++) {
+                float sum = 0.0;
+                for (int k = 0; k < tensor1->shape[1]; k++) {
+                    sum += tensor1->data[i * tensor1->shape[1] + k] * tensor2->data[batch*tensor2->strides[0] + (k * tensor2->shape[2] + j)];
+                }
+                result_data[(batch * result_data_stride) + (i * tensor2->shape[2] + j)] = sum;
+            }
+        }
+    }
+} 
+
+void batched_matmul_tensor_cpu(Tensor* tensor1, Tensor* tensor2, float* result_data) {
+    int result_data_stride = tensor1->shape[1] * tensor2->shape[2];
+
+    for (int batch = 0; batch < tensor2->shape[0]; batch++) {
+    
+        for (int i = 0; i < tensor1->shape[1]; i++) {
+            for (int j = 0; j < tensor2->shape[2]; j++) {
+                float sum = 0.0;
+                for (int k = 0; k < tensor1->shape[2]; k++) {
+                    sum += tensor1->data[(batch * tensor1->strides[0]) + i * tensor1->shape[2] + k] * tensor2->data[batch*tensor2->strides[0] + (k * tensor2->shape[2] + j)];
+                }
+                result_data[(batch * result_data_stride) + (i * tensor2->shape[2] + j)] = sum;
+            }
+        }
+    }
+} 
+
+void conv2d_tensor_cpu(Tensor* input, Tensor* weight, Tensor* bias, float* result_data, int stride, int padding) {
+    int batch_size = input->shape[0];
+    int in_channels = input->shape[1];
+    int in_height = input->shape[2];
+    int in_width = input->shape[3];
+    int out_channels = weight->shape[0];
+    int kernel_height = weight->shape[2];
+    int kernel_width = weight->shape[3];
+
+    int out_height = (in_height + 2 * padding - kernel_height) / stride + 1;
+    int out_width = (in_width + 2 * padding - kernel_width) / stride + 1;
+
+    for (int b = 0; b < batch_size; b++) {
+        for (int oc = 0; oc < out_channels; oc++) {
+            for (int oh = 0; oh < out_height; oh++) {
+                for (int ow = 0; ow < out_width; ow++) {
+                    float sum = bias ? bias->data[oc] : 0.0f;
+                    for (int ic = 0; ic < in_channels; ic++) {
+                        for (int kh = 0; kh < kernel_height; kh++) {
+                            for (int kw = 0; kw < kernel_width; kw++) {
+                                int ih = oh * stride + kh - padding;
+                                int iw = ow * stride + kw - padding;
+                                if (ih >= 0 && ih < in_height && iw >= 0 && iw < in_width) {
+                                    int input_idx = ((b * in_channels + ic) * in_height + ih) * in_width + iw;
+                                    int weight_idx = ((oc * in_channels + ic) * kernel_height + kh) * kernel_width + kw;
+                                    sum += input->data[input_idx] * weight->data[weight_idx];
+                                }
+                            }
+                        }
+                    }
+                    int output_idx = ((b * out_channels + oc) * out_height + oh) * out_width + ow;
+                    result_data[output_idx] = sum;
+                }
+            }
+        }
+    }
+}
+
+void qconv2d_tensor_cpu(Tensor* input, Tensor* weight, float* result_data, int stride, int padding) {
+
 }

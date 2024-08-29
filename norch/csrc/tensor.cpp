@@ -9,7 +9,7 @@
 
 extern "C" {
 
-    Tensor* create_tensor(float* data, int* shape, int ndim, char* device) {
+    Tensor* create_tensor(float* data, int* shape, int ndim, char* device, float scale, int zero_point) {
         
         Tensor* tensor = (Tensor*)malloc(sizeof(Tensor));
         if (tensor == NULL) {
@@ -43,6 +43,9 @@ extern "C" {
             tensor->strides[i] = stride;
             stride *= shape[i];
         }
+
+        tensor->scale = scale;
+        tensor->zero_point = zero_point;
 
         return tensor;
     }
@@ -153,7 +156,7 @@ extern "C" {
                 exit(1);
             }
             add_tensor_cpu(tensor1, tensor2, result_data);
-            return create_tensor(result_data, shape, ndim, tensor1->device);
+            return create_tensor(result_data, shape, ndim, tensor1->device, tensor1->scale, tensor1->zero_point);
         } 
             
     }
@@ -196,7 +199,7 @@ extern "C" {
             }
 
             add_broadcasted_tensor_cpu(tensor1, tensor2, result_data, broadcasted_shape, broadcasted_size);
-            return create_tensor(result_data, broadcasted_shape, max_ndim, tensor1->device);
+            return create_tensor(result_data, broadcasted_shape, max_ndim, tensor1->device, tensor1->scale, tensor1->zero_point);
         } 
         
     }
@@ -255,7 +258,7 @@ extern "C" {
                 }
                 
             }
-            return create_tensor(result_data, shape, ndim, tensor->device);
+            return create_tensor(result_data, shape, ndim, tensor->device, tensor->scale, tensor->zero_point);
         }   
     }
 
@@ -306,7 +309,7 @@ extern "C" {
                 }
                 
             }
-            return create_tensor(result_data, shape, ndim, tensor->device);
+            return create_tensor(result_data, shape, ndim, tensor->device, tensor->scale, tensor->zero_point);
 
         } 
     }
@@ -358,7 +361,7 @@ extern "C" {
                 }
                 
             }
-            return create_tensor(result_data, shape, ndim, tensor->device);
+            return create_tensor(result_data, shape, ndim, tensor->device, tensor->scale, tensor->zero_point);
 
         }   
     }
@@ -396,7 +399,7 @@ extern "C" {
                 exit(1);
             }
             sub_tensor_cpu(tensor1, tensor2, result_data);
-            return create_tensor(result_data, shape, ndim, tensor1->device);
+            return create_tensor(result_data, shape, ndim, tensor1->device, tensor1->scale, tensor1->zero_point);
         }
     }
 
@@ -438,7 +441,7 @@ extern "C" {
             }
 
             sub_broadcasted_tensor_cpu(tensor1, tensor2, result_data, broadcasted_shape, broadcasted_size);
-            return create_tensor(result_data, broadcasted_shape, max_ndim, tensor1->device);
+            return create_tensor(result_data, broadcasted_shape, max_ndim, tensor1->device, tensor1->scale, tensor1->zero_point);
         }
     }
 
@@ -475,7 +478,7 @@ extern "C" {
                 exit(1);
             }
             elementwise_mul_tensor_cpu(tensor1, tensor2, result_data);
-            return create_tensor(result_data, shape, ndim, tensor1->device);
+            return create_tensor(result_data, shape, ndim, tensor1->device, tensor1->scale, tensor1->zero_point);
         } 
         
     }
@@ -500,7 +503,7 @@ extern "C" {
                 exit(1);
             }
             scalar_mul_tensor_cpu(tensor, scalar, result_data);
-            return create_tensor(result_data, shape, ndim, tensor->device);
+            return create_tensor(result_data, shape, ndim, tensor->device, tensor->scale, tensor->zero_point);
         } 
         
     }
@@ -525,7 +528,7 @@ extern "C" {
                 exit(1);
             }
             scalar_div_tensor_cpu(scalar, tensor, result_data);
-            return create_tensor(result_data, shape, ndim, tensor->device);
+            return create_tensor(result_data, shape, ndim, tensor->device, tensor->scale, tensor->zero_point);
         } 
         
     }
@@ -550,7 +553,7 @@ extern "C" {
                 exit(1);
             }
             tensor_div_scalar_cpu(tensor, scalar, result_data);
-            return create_tensor(result_data, shape, ndim, tensor->device);
+            return create_tensor(result_data, shape, ndim, tensor->device, tensor->scale, tensor->zero_point);
         } 
         
     }
@@ -588,7 +591,7 @@ extern "C" {
                 exit(1);
             }
             tensor_div_tensor_cpu(tensor1, tensor2, result_data);
-            return create_tensor(result_data, shape, ndim, tensor1->device);
+            return create_tensor(result_data, shape, ndim, tensor1->device, tensor1->scale, tensor1->zero_point);
         } 
         
     }
@@ -637,7 +640,7 @@ extern "C" {
                 exit(1);
             }
             matmul_tensor_cpu(tensor1, tensor2, result_data);
-            return create_tensor(result_data, shape, ndim, tensor1->device);
+            return create_tensor(result_data, shape, ndim, tensor1->device, tensor1->scale, tensor1->zero_point);
         } 
         
     }
@@ -684,7 +687,7 @@ extern "C" {
                 exit(1);
             }
             broadcasted_batched_matmul_tensor_cpu(tensor1, tensor2, result_data);
-            return create_tensor(result_data, shape, ndim, tensor1->device);
+            return create_tensor(result_data, shape, ndim, tensor1->device, tensor1->scale, tensor1->zero_point);
         } 
         
 
@@ -738,7 +741,7 @@ extern "C" {
                 exit(1);
             }
             batched_matmul_tensor_cpu(tensor1, tensor2, result_data);
-            return create_tensor(result_data, shape, ndim, tensor1->device);
+            return create_tensor(result_data, shape, ndim, tensor1->device, tensor1->scale, tensor1->zero_point);
         } 
         
 
@@ -764,7 +767,7 @@ extern "C" {
                 exit(1);
             }
             tensor_pow_scalar_cpu(tensor, exponent, result_data);
-            return create_tensor(result_data, shape, ndim, tensor->device);
+            return create_tensor(result_data, shape, ndim, tensor->device, tensor->scale, tensor->zero_point);
         } 
         
     }
@@ -788,7 +791,7 @@ extern "C" {
                 exit(1);
             }
             scalar_pow_tensor_cpu(base, tensor, result_data);
-            return create_tensor(result_data, shape, ndim, tensor->device);
+            return create_tensor(result_data, shape, ndim, tensor->device, tensor->scale, tensor->zero_point);
         } 
         
     }
@@ -812,7 +815,7 @@ extern "C" {
                 exit(1);
             }
             log_tensor_cpu(tensor, result_data);
-            return create_tensor(result_data, shape, ndim, tensor->device);
+            return create_tensor(result_data, shape, ndim, tensor->device, tensor->scale, tensor->zero_point);
         } 
         
     }
@@ -849,7 +852,7 @@ extern "C" {
                 exit(1);
             }
             assign_tensor_cpu(tensor, result_data);
-            return create_tensor(result_data, shape, ndim, tensor->device);
+            return create_tensor(result_data, shape, ndim, tensor->device, tensor->scale, tensor->zero_point);
         } 
         
     }
@@ -887,7 +890,7 @@ extern "C" {
                 exit(1);
             }
             equal_tensor_cpu(tensor1, tensor2, result_data);
-            return create_tensor(result_data, shape, ndim, tensor1->device);
+            return create_tensor(result_data, shape, ndim, tensor1->device, tensor1->scale, tensor1->zero_point);
         } 
         
     }
@@ -930,7 +933,7 @@ extern "C" {
             }
 
             equal_broadcasted_tensor_cpu(tensor1, tensor2, result_data, broadcasted_shape, broadcasted_size);
-            return create_tensor(result_data, broadcasted_shape, max_ndim, tensor1->device);
+            return create_tensor(result_data, broadcasted_shape, max_ndim, tensor1->device, tensor1->scale, tensor1->zero_point);
         } 
         
     }
@@ -955,7 +958,7 @@ extern "C" {
                 exit(1);
             }
             ones_like_tensor_cpu(tensor, result_data);
-            return create_tensor(result_data, shape, ndim, tensor->device);
+            return create_tensor(result_data, shape, ndim, tensor->device, tensor->scale, tensor->zero_point);
         } 
         
     }
@@ -979,7 +982,7 @@ extern "C" {
                 exit(1);
             }
             zeros_like_tensor_cpu(tensor, result_data);
-            return create_tensor(result_data, shape, ndim, tensor->device);
+            return create_tensor(result_data, shape, ndim, tensor->device, tensor->scale, tensor->zero_point);
         } 
         
     }
@@ -1003,7 +1006,7 @@ extern "C" {
                 exit(1);
             }
             sin_tensor_cpu(tensor, result_data);
-            return create_tensor(result_data, shape, ndim, tensor->device);
+            return create_tensor(result_data, shape, ndim, tensor->device, tensor->scale, tensor->zero_point);
         } 
         
     }
@@ -1028,7 +1031,7 @@ extern "C" {
                 exit(1);
             }
             cos_tensor_cpu(tensor, result_data);
-            return create_tensor(result_data, shape, ndim, tensor->device);
+            return create_tensor(result_data, shape, ndim, tensor->device, tensor->scale, tensor->zero_point);
         } 
         
     }
@@ -1052,7 +1055,7 @@ extern "C" {
                 exit(1);
             }
             sigmoid_tensor_cpu(tensor, result_data);
-            return create_tensor(result_data, shape, ndim, tensor->device);
+            return create_tensor(result_data, shape, ndim, tensor->device, tensor->scale, tensor->zero_point);
         } 
         
     }
@@ -1091,7 +1094,7 @@ extern "C" {
                     fprintf(stderr, "Transpose only supports tensors up to 3 dimensions.\n");
                     exit(-1);
             }
-            return create_tensor(result_data, shape, ndim, tensor->device);
+            return create_tensor(result_data, shape, ndim, tensor->device, tensor->scale, tensor->zero_point);
         } 
         
     }
@@ -1121,7 +1124,7 @@ extern "C" {
             }
             assign_tensor_cpu(tensor, result_data);
             
-            Tensor* new_tensor = create_tensor(result_data, shape, ndim, tensor->device);
+            Tensor* new_tensor = create_tensor(result_data, shape, ndim, tensor->device, tensor->scale, tensor->zero_point);
             for (int i = 0; i < ndim; i++) {
                 new_tensor->strides[i] = tensor->strides[i];
             }
@@ -1131,6 +1134,64 @@ extern "C" {
             return new_tensor;
         } 
         
+    }
+
+    Tensor* conv2d_tensor(Tensor* input, Tensor* weight, Tensor* bias, int stride, int padding) {
+        // Check input dimensions
+        if (input->ndim != 4 || weight->ndim != 4) {
+            fprintf(stderr, "Input and weight must be 4D tensors for conv2d\n");
+            exit(1);
+        }
+
+        // Extract dimensions
+        int batch_size = input->shape[0];
+        int in_channels = input->shape[1];
+        int in_height = input->shape[2];
+        int in_width = input->shape[3];
+        int out_channels = weight->shape[0];
+        int kernel_height = weight->shape[2];
+        int kernel_width = weight->shape[3];
+
+        // Check if input and weight channels match
+        if (in_channels != weight->shape[1]) {
+            fprintf(stderr, "Input channels (%d) must match weight input channels (%d)\n", in_channels, weight->shape[1]);
+            exit(1);
+        }
+
+        // Calculate output dimensions
+        int out_height = (in_height + 2 * padding - kernel_height) / stride + 1;
+        int out_width = (in_width + 2 * padding - kernel_width) / stride + 1;
+
+        // Prepare output shape
+        int ndim = 4;
+        int* shape = (int*)malloc(ndim * sizeof(int));
+        if (shape == NULL) {
+            fprintf(stderr, "Memory allocation failed\n");
+            exit(1);
+        }
+        shape[0] = batch_size;
+        shape[1] = out_channels;
+        shape[2] = out_height;
+        shape[3] = out_width;
+
+        // Calculate output size
+        int output_size = batch_size * out_channels * out_height * out_width;
+
+        // Allocate memory for output data
+        float* result_data = (float*)malloc(output_size * sizeof(float));
+        if (result_data == NULL) {
+            fprintf(stderr, "Memory allocation failed\n");
+            exit(1);
+        }
+
+        // Perform convolution
+        if (strcmp(input->device, "cpu") == 0 && strcmp(weight->device, "cpu") == 0) {
+            conv2d_tensor_cpu(input, weight, bias, result_data, stride, padding);
+            return create_tensor(result_data, shape, ndim, input->device, input->scale, input->zero_point);
+        } else {
+            fprintf(stderr, "Unsupported device for conv2d\n");
+            exit(1);
+        }
     }
 
     void make_contiguous(Tensor* tensor) {

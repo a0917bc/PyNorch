@@ -8,10 +8,12 @@ typedef struct {
     int ndim;
     int size;
     char* device;
+    float scale;
+    int zero_point;
 } Tensor;
 
 extern "C" {
-    Tensor* create_tensor(float* data, int* shape, int ndim, char* device);
+    Tensor* create_tensor(float* data, int* shape, int ndim, char* device, float scale, int zero_point);
     void delete_tensor(Tensor* tensor);
     void delete_strides(Tensor* tensor);
     void delete_shape(Tensor* tensor);
@@ -43,6 +45,7 @@ extern "C" {
     Tensor* transpose_tensor(Tensor* tensor);
     Tensor* transpose_axes_tensor(Tensor* tensor, int axis1, int axis2);
     void make_contiguous(Tensor* tensor);
+    Tensor* conv2d_tensor(Tensor* input, Tensor* weight, Tensor* bias, int stride, int padding);
 }
 
 #endif /* TENSOR_H */
