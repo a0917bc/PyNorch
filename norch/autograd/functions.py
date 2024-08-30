@@ -1,6 +1,6 @@
 import math
 import norch
-from norch.tensor import Tensor
+# from norch.tensor import Tensor
 class AddBackward:
     def __init__(self, x, y):
         self.input = [x, y]
@@ -132,7 +132,7 @@ class SumBackward:
         self.axis = axis
         self.keepdim = keepdim
 
-    def backward(self, gradient:Tensor):
+    def backward(self, gradient):
         input_shape = self.input[0].shape.copy()
         if self.axis == -1:
             # If axis is None, sum reduces the tensor to a scalar.

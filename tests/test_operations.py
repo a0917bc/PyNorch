@@ -748,6 +748,32 @@ class TestTensorOperations(unittest.TestCase):
 
         self.assertTrue(utils.compare_torch(torch_ones_result, torch_ones_expected))
 
+    def test_conv2d(self):
+        """
+        Test 2D convolution operation
+        """
+        print("Testing conv2d")
+        for _ in range(100):
+            input = torch.randn(1, 3, 32, 32) # input∼N(0,1) 
+            weight = torch.randn(16, 3, 3, 3) # weight∼N(0,1) 
+            norch_input = norch.Tensor(input.tolist()) 
+            norch_weight = norch.Tensor(weight.tolist()) 
+            norch_result = norch_input.conv2d(norch_weight, stride=2, padding=1)
+            torch_expected = torch.nn.functional.conv2d(input, weight, stride=2, padding=1)
+            print("PyTorch result shape:", torch_expected.shape)
+            print("PyTorch result:", torch_expected[0][0:2][0][0:2])
+            print("Norch result:", utils.to_torch(norch_result)[0][0:2][0][0:2])
+            torch.testing.assert_close(utils.to_torch(norch_result), torch_expected)
+    def test_qconv2d(self):
+        """
+        Test quantized 2D convolution operation
+        """
+        print("Testing qconv2d")
+        input = torch.randn(20, 16, 50, 100)
+        q_input = torch.quantize_per_tensor(input, scale=1.0, zero_point=0, dtype=torch.quint8)
+        m = Conv2d(16, 33, 3, stride=2)
+        output = m(q_input)
+        print("Quantized Conv2d output:", output)
 
 if __name__ == '__main__':
     unittest.main()
